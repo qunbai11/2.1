@@ -1,43 +1,53 @@
-// Load the input number from R0
+// Step 1: Get the value from R0
 @R0
 D=M
-@IS_POS
-D;JGE     // If >= 0, jump to IS_POS
 
-// If number is negative:
-@R2
-M=1       // Mark as negative
+// Step 2: Assume negative by default
+@R9
+M=1       // isNegative = 1 (default)
 
-D=-D      // Try to get absolute value
-@CHECK_OVF
-D;JLT     // If still negative => overflow
+@R8
+M=0       // overflow = 0 (reset)
 
+// Step 3: Check if number >= 0
+@SKIP_NEG_CHECK
+D;JGE     // Jump if non-negative
+
+// If negative, flip sign
+D=-D
+
+// Step 4: Check if overflow happened after negation
+@HANDLE_OVERFLOW
+D;JLT
+
+// Step 5: Store result if no overflow
 @R1
-M=D       // Store absolute value
+M=D       // R1 = abs(input)
 @R3
-M=0       // No overflow
-@END
+M=0       // overflow = 0
+@GOTO_END
 0;JMP
 
-(CHECK_OVF)
+(HANDLE_OVERFLOW)
 @R3
-M=1       // Mark overflow
+M=1       // overflow = 1
 @R0
 D=M
 @R1
-M=D       // Keep original number
+M=D       // store original input (invalid abs)
 
-@END
+@GOTO_END
 0;JMP
 
-(IS_POS)
-@R2
-M=0       // Not negative
-@R3
-M=0       // No overflow
+(SKIP_NEG_CHECK)
+// If already positive
 @R1
-M=D       // Store as is
+M=D       // store original input
+@R9
+M=0       // isNegative = 0
+@R3
+M=0       // overflow = 0
 
-(END)
-@END
-0;JMP     // Halt
+(GOTO_END)
+@GOTO_END
+0;JMP     // halt
