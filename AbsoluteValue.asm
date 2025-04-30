@@ -1,56 +1,43 @@
-// Load input number
+// Load the input number from R0
 @R0
 D=M
+@IS_POS
+D;JGE     // If >= 0, jump to IS_POS
 
-// Assume it's positive by default
-@POS
-D;JGT
+// If number is negative:
+@R2
+M=1       // Mark as negative
 
-@ZERO
-D;JEQ
+D=-D      // Try to get absolute value
+@CHECK_OVF
+D;JLT     // If still negative => overflow
 
-// Handle negative input
-@R7
-M=1        // R7: sign flag = negative
-
-D=-D       // Try to negate it
-@TOO_BIG
-D;JLT      // If still negative => overflow
-
-@R6
-M=D        // R6: store abs value
-@R8
-M=0        // R8: overflow flag = 0
-@FINISH
+@R1
+M=D       // Store absolute value
+@R3
+M=0       // No overflow
+@END
 0;JMP
 
-(TOO_BIG)
-@R8
-M=1        // overflow occurred
-@R6
-M=0        // result invalid
+(CHECK_OVF)
+@R3
+M=1       // Mark overflow
+@R0
+D=M
+@R1
+M=D       // Keep original number
 
-@FINISH
+@END
 0;JMP
 
-(ZERO)
-@R6
-M=0
-@R7
-M=0
-@R8
-M=0
-@FINISH
-0;JMP
+(IS_POS)
+@R2
+M=0       // Not negative
+@R3
+M=0       // No overflow
+@R1
+M=D       // Store as is
 
-(POS)
-@R6
-M=D
-@R7
-M=0
-@R8
-M=0
-
-(FINISH)
-@FINISH
-0;JMP
+(END)
+@END
+0;JMP     // Halt
